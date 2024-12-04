@@ -1,44 +1,53 @@
-import inputfilereader
-import vtk
+import mbsModel
+import sys
+from pathlib import Path
 
-listOfMyObjects = inputfilereader.readInput4Output("inputfilereader/test.fdd","inputfilereader/test1.json","inputfilereader/test1.fds")
+from vtkmodules.vtkRenderingCore import (
+    vtkRenderWindow,
+    vtkRenderWindowInteractor,
+    vtkRenderer
+)
+from vtkmodules.all import vtkInteractorStyleTrackballCamera
 
-# VTK-Renderer erstellen
-renderer = vtk.vtkRenderer()
-renderer.SetBackground(0.1, 0.1, 0.2)  # Dunkelblauer Hintergrund --> echter hintergrund wäre auch weiß
+if len(sys.argv) < 2:
+    sys.exit("No fdd file provided! Please run script with additional argument: fdd-filepath!")
 
-# Geometrien zur Szene hinzufügen
-for obj in listOfMyObjects:
-    if isinstance(obj, inputfilereader.mbsObject.rigidBody):  # Nur RigidBody-Objekte
-        renderer.AddActor(obj.actor)
-    elif isinstance(obj, inputfilereader.mbsObject.constraint):  # Constraint-Objekte
-        renderer.AddActor(obj.actor)
-        renderer.AddActor(obj.text_actor)
-    elif isinstance(obj, inputfilereader.mbsObject.settings):  # Settings-Objekt (einschließlich Gravitationsvektor)
-        renderer.AddActor(obj.actor)
-        renderer.AddActor(obj.text_actor)
-        
-# Koordinatensystem hinzufügen
-axes = vtk.vtkAxesActor()
-axes.SetTotalLength(2, 2, 2)    # Länge der Achsen (X, Y, Z)
-axes.SetShaftTypeToCylinder()    # Darstellung der Achsen als Zylinder
-axes.SetAxisLabels(1)            # Achsenbeschriftungen anzeigen (X, Y, Z)
-renderer.AddActor(axes)
+myModel = mbsModel.mbsModel()
 
-# Render-Fenster einrichten
-renderWindow = vtk.vtkRenderWindow()
-renderWindow.AddRenderer(renderer)
-renderWindow.SetSize(800, 600)
+#read fdd file path from input arguments
+fdd_path = Path(sys.argv[1])
+myModel.importFddFile(fdd_path)
+#create path for solver input file (fds)
+fds_path = fdd_path.with_suffix(".fds")
+myModel.exportFdsFile(fds_path)
+#create path for model database file (json)
+json_path = fdd_path.with_suffix(".json")
+myModel.saveDatabase(json_path)
 
-# Interactor erstellen
-renderWindowInteractor = vtk.vtkRenderWindowInteractor()
-renderWindowInteractor.SetRenderWindow(renderWindow)
+#create new model and load json generated above
+#(content should be the same)
+newModel = mbsModel.mbsModel()
+newModel.loadDatabase(json_path)
 
-# Interactor-Style festlegen
-interactorStyle = vtk.vtkInteractorStyleTrackballCamera()
-renderWindowInteractor.SetInteractorStyle(interactorStyle)
+#visualization part
+#-----------------------------------------------------------------------------
+renderer = vtkRenderer()
+renWin = vtkRenderWindow()
+renWin.AddRenderer(renderer)
+renWin.SetWindowName('pyFreeDyn')
+renWin.SetSize(1024,768)
 
-# Szene rendern und Interaktion starten
-renderWindow.Render()
-print("Starte Visualisierung")
-renderWindowInteractor.Start()
+# Interactor einrichten
+interactor = vtkRenderWindowInteractor()
+interactor.SetRenderWindow(renWin)
+
+style = vtkInteractorStyleTrackballCamera()
+interactor.SetInteractorStyle(style)
+
+# Modell anzeigen
+newModel.showModel(renderer)
+
+# Render- und Interaktionsloop starten
+renWin.Render()
+interactor.Start()
+#-----------------------------------------------------------------------------
