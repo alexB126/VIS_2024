@@ -1,4 +1,3 @@
-# Importiere das mbsModel-Modul
 import mbsModel
 # Importiere Path, um mit Dateipfaden zu arbeiten
 from pathlib import Path
@@ -71,7 +70,6 @@ class MainWindow(QMainWindow):
         """Erstellt die Statusleiste und zeigt eine Nachricht an."""
         self.statusBar().showMessage("Kein Modell geladen")
  
-
  # verbesserung möglich indem man mehr files einlesen kann
     def load_model(self):
         """Lädt ein Modell aus einer JSON-Datei."""
