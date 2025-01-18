@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
         # Datei-Menü hinzufügen
         file_menu = menubar.addMenu('File')
         view_menu = menubar.addMenu('View')
+        control_menu = menubar.addMenu('Steuerung')
 
         # 'Load' Aktion hinzufügen
         load_action = QAction('Load', self)
@@ -57,6 +58,22 @@ class MainWindow(QMainWindow):
         exit_action = QAction('Exit', self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
+
+        top_view_action = QAction("Top View", self)
+        top_view_action.triggered.connect(self.set_top_view)
+        view_menu.addAction(top_view_action)
+
+        front_view_action = QAction("Front View", self)
+        front_view_action.triggered.connect(self.set_front_view)
+        view_menu.addAction(front_view_action)
+
+        zoom_in_action = QAction("Zoom In", self)
+        zoom_in_action.triggered.connect(self.zoom_in)
+        view_menu.addAction(zoom_in_action)
+
+        zoom_fit_action = QAction("Fit All", self)
+        zoom_fit_action.triggered.connect(self.fit_view_to_all)
+        view_menu.addAction(zoom_fit_action)
  
     def create_status_bar(self):
         """Erstellt die Statusleiste und zeigt eine Nachricht an."""
@@ -126,6 +143,46 @@ class MainWindow(QMainWindow):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
+
+    def set_top_view(self):
+        camera = self.vtkWidget.renderer.GetActiveCamera()
+        # z.B. Position 0,0,+100 (von oben)
+        camera.SetPosition(0, 0, 100)
+        # Focal point = 0,0,0 (Zielkoordinate)
+        camera.SetFocalPoint(0, 0, 0)
+        # "Oben" ist jetzt die Y-Achse oder X-Achse? 
+        # Hier definieren wir z. B. "X-Achse" als "oben" in der Ansicht:
+        camera.SetViewUp(1, 0, 0)  
+        # Ggf. zum Abschluss "ResetCamera" anrufen, 
+        # falls du die Szene an den Inhalt anpassen willst:
+        self.vtkWidget.renderer.ResetCamera()
+
+        self.vtkWidget.GetRenderWindow().Render()
+
+    def set_front_view(self):
+        camera = self.vtkWidget.renderer.GetActiveCamera()
+        # Position = 0,-100,0 (Blick Richtung +y, also "nach oben" in Y)
+        camera.SetPosition(0, -100, 0)
+        # Focal point
+        camera.SetFocalPoint(0, 0, 0)
+        # "Oben" = Z-Achse
+        camera.SetViewUp(0, 0, 1)
+        
+        # Optional:
+        self.vtkWidget.renderer.ResetCamera()
+        
+        self.vtkWidget.GetRenderWindow().Render()
+
+    def zoom_in(self):
+        camera = self.vtkWidget.renderer.GetActiveCamera()
+        camera.Zoom(1.2)  # 20% reinzoomen
+        self.vtkWidget.GetRenderWindow().Render()
+
+    def fit_view_to_all(self):
+        # Ermittelt den Bounding-Box-Umfang aller sichtbaren Props/Actors im Renderer 
+        # und stellt die Kamera so ein, dass sie alles vollständig erfasst:
+        self.vtkWidget.renderer.ResetCamera()
+        self.vtkWidget.GetRenderWindow().Render()
 
     def initUI(self):
         # Erstelle einen QSplitter (horizontal = nebeneinander)
