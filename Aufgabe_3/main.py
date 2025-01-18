@@ -1,5 +1,3 @@
-# gemeinschaftlich mit Herr Faje Darius erstellt. 
-
 # Importiere sys und QApplication für die Qt-Anwendung
 
 import sys
