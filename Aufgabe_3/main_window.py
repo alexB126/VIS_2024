@@ -2,6 +2,8 @@ import mbsModel
 # Importiere Path, um mit Dateipfaden zu arbeiten
 from pathlib import Path
 # Importiere wichtige Klassen aus PySide6 (GUI-Komponenten)
+from PySide6.QtWidgets import (QMainWindow, QWidget, QTreeWidget, QTreeWidgetItem, QHBoxLayout,
+                               QFileDialog, QMenuBar, QStatusBar, QMessageBox,QSplitter)
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QStatusBar, QMessageBox
 from PySide6.QtCore import Qt
@@ -27,17 +29,7 @@ class MainWindow(QMainWindow):
         # Statusleiste erstellen
         self.create_status_bar()
  
-        # VTK-Widget und -Renderer initialisieren
-        self.widget = MainWidget(self)  # Erstelle ein VTK-Widget
-       
-        # Setze den Hintergrund des Renderers auf Schwarz
-        self.widget.renderer.SetBackground(0.0, 0.0, 0.0)  # Hintergrund für den Renderer auf Schwarz
- 
-        # Setze das Widget als zentrales Widget des Fensters
-        self.setCentralWidget(self.widget)
- 
-        # Initialisiere das RenderWindow, um den Hintergrund anzuzeigen
-        self.widget.GetRenderWindow().Render()  # Rendere das Fenster, um den schwarzen Hintergrund zu sehen
+        self.initUI()
  
     def create_menu(self):
         menubar = self.menuBar()
@@ -85,12 +77,14 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Modell-Laden abgebrochen")
  
     def load_json_model(self, filename):
-        """Lädt das Modell aus einer JSON-Datei und zeigt es im VTK-Renderer."""
         try:
             self.myModel = mbsModel.mbsModel()  # Erstelle ein neues Modell
-            self.myModel.loadDatabase(Path(filename))  # Lade das Modell aus der JSON-Datei
-            self.statusBar().showMessage(f"Modell geladen: {filename}")
-            self.widget.update_renderer(self.myModel)  # ohne update sieht man es noch ned 
+            if self.myModel.loadDatabase(filename):  # Lade das Modell
+                self.updateTreeWidget()  # Aktualisiere den Baum mit den neuen Daten
+                self.statusBar().showMessage(f"Modell geladen: {filename}")
+                self.vtkWidget.update_renderer(self.myModel)
+            else:
+                self.statusBar().showMessage("Fehler beim Laden des Modells: Datei konnte nicht geladen werden")
         except Exception as e:
             self.statusBar().showMessage(f"Fehler beim Laden des Modells: {e}")
  
@@ -120,7 +114,8 @@ class MainWindow(QMainWindow):
             self.myModel = mbsModel.mbsModel()
             self.myModel.importFddFile(filename)
             self.statusBar().showMessage(f"FDD-Datei importiert: {filename}")
-            self.widget.update_renderer(self.myModel)
+            self.vtkWidget.update_renderer(self.myModel)
+            self.updateTreeWidget()
         except Exception as e:
             self.statusBar().showMessage(f"Fehler beim Importieren der FDD-Datei: {e}")
  
@@ -131,4 +126,63 @@ class MainWindow(QMainWindow):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
+
+    def initUI(self):
+        # Erstelle einen QSplitter (horizontal = nebeneinander)
+        splitter = QSplitter(Qt.Horizontal, self)
         
+        # Erzeuge das TreeWidget
+        self.treeWidget = QTreeWidget()
+        self.treeWidget.setColumnCount(1)
+        self.treeWidget.setHeaderLabels(["Strukturbaum"])
+
+        # Erzeuge dein VTK-Widget
+        self.vtkWidget = MainWidget(self)
+
+        # Füge beide Widgets dem QSplitter hinzu
+        splitter.addWidget(self.treeWidget)
+        splitter.addWidget(self.vtkWidget)
+
+        # Wenn du willst, kannst du eine Start-Größenverteilung festlegen, z.B.:
+        # (Erster Wert = Breite des TreeWidgets, zweiter Wert = Breite des VTK-Widgets)
+        splitter.setSizes([200, 600])
+
+        # Setze diesen Splitter als zentrales Widget des MainWindow
+        self.setCentralWidget(splitter)
+
+        # Hintergrund & erster Render-Durchlauf
+        self.vtkWidget.renderer.SetBackground(0, 0, 0)
+        self.vtkWidget.GetRenderWindow().Render()
+
+
+    def updateTreeWidget(self):
+        self.treeWidget.clear()  # Vorhandenen Inhalt löschen
+        
+        # Oberster Knoten (optional, damit der Nutzer alles einklappen kann)
+        root_item = QTreeWidgetItem(["Model"])
+        self.treeWidget.addTopLevelItem(root_item)
+        
+        # Merkt sich die Kategorie-Knoten nach Typ, z.B. "Body" -> QTreeWidgetItem(...)
+        category_nodes = {}
+
+        # Durch alle Objekte im Modell iterieren
+        for obj in self.myModel.mbsObjectList:
+            main_type = obj.getType()      # z.B. "Body", "Force", "Constraint", ...
+            sub_type = obj.getSubType()    # z.B. "Rigid_EulerParameter_PAI", "GenericForce", etc.
+
+            # Falls wir dafür noch keinen Kategorie-Knoten haben, legen wir ihn an
+            if main_type not in category_nodes:
+                # Du kannst die Bezeichnung beliebig anpassen, z.B. main_type + "s"
+                category_item = QTreeWidgetItem([main_type + "s"])
+                root_item.addChild(category_item)
+                category_nodes[main_type] = category_item
+
+            # Unter dem richtigen Kategorie-Knoten fügen wir ein Child mit SubType-Info hinzu
+            sub_item = QTreeWidgetItem([sub_type])
+            category_nodes[main_type].addChild(sub_item)
+
+        # Falls du möchtest, dass der Model-Knoten standardmäßig ausgeklappt ist:
+        root_item.setExpanded(True)
+
+        # Dasselbe kannst du für die Kategorien tun, z.B.:
+        # category_item.setExpanded(False)  # damit die Unterpunkte anfangs eingeklappt sind
