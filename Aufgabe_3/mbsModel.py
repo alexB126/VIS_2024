@@ -8,10 +8,15 @@ import dataobject
 import json
 import os
 
+
 class mbsModel:
     def __init__(self):
         self.__mbsObjectList = []
-    
+
+    @property
+    def mbsObjectList(self):
+        return self.__mbsObjectList
+
     def importFddFile(self,filepath):
         file_name, file_extension = os.path.splitext(filepath)
 
