@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         # Datei-Menü hinzufügen
         file_menu = menubar.addMenu('File')
         view_menu = menubar.addMenu('View')
-        control_menu = menubar.addMenu('Steuerung')
+        control_menu = menubar.addMenu('Steuerung') # muss noch erweitert werden wenn Zeit!!
 
         # 'Load' Aktion hinzufügen
         load_action = QAction('Load', self)
@@ -213,33 +213,36 @@ class MainWindow(QMainWindow):
 
 
     def updateTreeWidget(self):
-        self.treeWidget.clear()  # Vorhandenen Inhalt löschen
+        self.treeWidget.clear()
         
-        # Oberster Knoten (optional, damit der Nutzer alles einklappen kann)
         root_item = QTreeWidgetItem(["Model"])
         self.treeWidget.addTopLevelItem(root_item)
         
-        # Merkt sich die Kategorie-Knoten nach Typ, z.B. "Body" -> QTreeWidgetItem(...)
+        # Merkt sich Kategorie-Knoten wie "Body" -> QTreeWidgetItem
         category_nodes = {}
+        # Hier führen wir jetzt Zähler pro Typ
+        type_counts = {}
 
-        # Durch alle Objekte im Modell iterieren
         for obj in self.myModel.mbsObjectList:
-            main_type = obj.getType()      # z.B. "Body", "Force", "Constraint", ...
-            sub_type = obj.getSubType()    # z.B. "Rigid_EulerParameter_PAI", "GenericForce", etc.
-
-            # Falls wir dafür noch keinen Kategorie-Knoten haben, legen wir ihn an
+            main_type = obj.getType()    # z.B. "Body", "Force" ...
+            sub_type  = obj.getSubType() # z.B. "Rigid_EulerParameter_PAI"
+            
+            # Falls noch keine Kategorie existiert, anlegen:
             if main_type not in category_nodes:
-                # Du kannst die Bezeichnung beliebig anpassen, z.B. main_type + "s"
                 category_item = QTreeWidgetItem([main_type + "s"])
                 root_item.addChild(category_item)
                 category_nodes[main_type] = category_item
+                type_counts[main_type] = 0   # Zähler initialisieren
 
-            # Unter dem richtigen Kategorie-Knoten fügen wir ein Child mit SubType-Info hinzu
-            sub_item = QTreeWidgetItem([sub_type])
-            category_nodes[main_type].addChild(sub_item)
+            # Hochzählen
+            type_counts[main_type] += 1
+            display_name = f"{main_type} {type_counts[main_type]}"
 
-        # Falls du möchtest, dass der Model-Knoten standardmäßig ausgeklappt ist:
+            # Wenn du zusätzlich den Subtype sehen willst:
+            # display_name += f" ({sub_type})"
+
+            # Objekt-Knoten einfügen
+            object_item = QTreeWidgetItem([display_name])
+            category_nodes[main_type].addChild(object_item)
+
         root_item.setExpanded(True)
-
-        # Dasselbe kannst du für die Kategorien tun, z.B.:
-        # category_item.setExpanded(False)  # damit die Unterpunkte anfangs eingeklappt sind
