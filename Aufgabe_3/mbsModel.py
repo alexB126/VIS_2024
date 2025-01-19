@@ -12,6 +12,7 @@ import os
 class mbsModel:
     def __init__(self):
         self.__mbsObjectList = []
+        self.backgroundcolor = [100,100,100]
 
     @property
     def mbsObjectList(self):
@@ -56,6 +57,7 @@ class mbsModel:
             elif(modelObject["type"] == "DataObject" and modelObject["subtype"] == "Parameter"):
                 self.__mbsObjectList.append(dataobject.parameter(parameter=modelObject["parameter"]))
 
+            self.backgroundcolor = data["backgroundcolor"]
         return True
 
     def saveDatabase(self,dataBasePath):
@@ -67,8 +69,8 @@ class mbsModel:
                            "parameter": object.parameter}
             modelObjects.append(modelObject)
         
-        jDataBase = json.dumps({"modelObjects": modelObjects})
-
+        jDataBase = json.dumps({"modelObjects": modelObjects ,
+                                "backgroundcolor" : self.backgroundcolor}) #
         with open(dataBasePath, "w") as outfile:
             outfile.write(jDataBase)
     

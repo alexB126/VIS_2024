@@ -4,8 +4,8 @@ from pathlib import Path
 # Importiere wichtige Klassen aus PySide6 (GUI-Komponenten)
 from PySide6.QtWidgets import (QMainWindow, QWidget, QTreeWidget, QTreeWidgetItem, QHBoxLayout,
                                QFileDialog, QMenuBar, QStatusBar, QMessageBox,QSplitter)
-from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QStatusBar, QMessageBox
+from PySide6.QtGui import QAction, QKeySequence,QColor
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QStatusBar, QMessageBox, QColorDialog
 from PySide6.QtCore import Qt
 # Importiere das MainWidget für das Rendering
 from main_widget import MainWidget
@@ -37,7 +37,13 @@ class MainWindow(QMainWindow):
         # Datei-Menü hinzufügen
         file_menu = menubar.addMenu('File')
         view_menu = menubar.addMenu('View')
-        control_menu = menubar.addMenu('Steuerung') # muss noch erweitert werden wenn Zeit!!
+        settings_menu = menubar.addMenu('Settings') # für die Hintergrundfarbe
+
+        # 'Backroundcolor' Aktion hinzufügen
+        backgroundcolor_action = QAction('Background', self)
+        backgroundcolor_action.triggered.connect(self.backgroundaction)
+        settings_menu.addAction(backgroundcolor_action)
+
 
         # 'Load' Aktion hinzufügen
         load_action = QAction('Load', self)
@@ -79,6 +85,22 @@ class MainWindow(QMainWindow):
         """Erstellt die Statusleiste und zeigt eine Nachricht an."""
         self.statusBar().showMessage("Kein Modell geladen")
  
+    def backgroundaction(self):
+        print('Test123')
+        backgroundcolor  = QColorDialog.getColor()
+        if backgroundcolor.isValid():
+            # z.B. direkt Float-Werte im Bereich [0..1]:
+            r = backgroundcolor.redF()
+            g = backgroundcolor.greenF()
+            b = backgroundcolor.blueF()
+
+            # Renderer-Hintergrund setzen
+            self.vtkWidget.renderer.SetBackground(r, g, b)
+
+            # Neu zeichnen
+            self.vtkWidget.GetRenderWindow().Render()
+            self.myModel.backgroundcolor = r,g,b
+
  # verbesserung möglich indem man mehr files einlesen kann
     def load_model(self):
         """Lädt ein Modell aus einer JSON-Datei."""
@@ -99,6 +121,7 @@ class MainWindow(QMainWindow):
             if self.myModel.loadDatabase(filename):  # Lade das Modell
                 self.updateTreeWidget()  # Aktualisiere den Baum mit den neuen Daten
                 self.statusBar().showMessage(f"Modell geladen: {filename}")
+                self.vtkWidget.renderer.SetBackground(self.myModel.backgroundcolor)
                 self.vtkWidget.update_renderer(self.myModel)
             else:
                 self.statusBar().showMessage("Fehler beim Laden des Modells: Datei konnte nicht geladen werden")
@@ -200,15 +223,14 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.treeWidget)
         splitter.addWidget(self.vtkWidget)
 
-        # Wenn du willst, kannst du eine Start-Größenverteilung festlegen, z.B.:
-        # (Erster Wert = Breite des TreeWidgets, zweiter Wert = Breite des VTK-Widgets)
+        # größe des Struckturbaum
         splitter.setSizes([200, 600])
 
         # Setze diesen Splitter als zentrales Widget des MainWindow
         self.setCentralWidget(splitter)
 
         # Hintergrund & erster Render-Durchlauf
-        self.vtkWidget.renderer.SetBackground(0, 0, 0)
+        self.vtkWidget.renderer.SetBackground(0,0,0) #hinzufügen der Farben, Normierung zwischen 0,1
         self.vtkWidget.GetRenderWindow().Render()
 
 
@@ -238,11 +260,8 @@ class MainWindow(QMainWindow):
             type_counts[main_type] += 1
             display_name = f"{main_type} {type_counts[main_type]}"
 
-            # Wenn du zusätzlich den Subtype sehen willst:
-            display_name += f" ({sub_type})"
-
             # Objekt-Knoten einfügen
             object_item = QTreeWidgetItem([display_name])
-            category_nodes[main_type].addChild(object_item)
+            category_nodes[main_type].addChild(object_item) # fügt die kategorien in den Strukturbaum ein
 
         root_item.setExpanded(True)
