@@ -12,4 +12,4 @@ def main():
     sys.exit(app.exec())             # Starte die Anwendung und blockiere die weitere Ausführung, bis die Anwendung geschlossen wird
  
 if __name__ == "__main__":
-    main()  # Starte die Hauptfunktion
+    main()  
