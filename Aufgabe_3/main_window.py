@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         self.create_menu()
         # Statusleiste erstellen
         self.create_status_bar()
- 
+        # VTK widget erstellen und konfig
         self.initUI()
  
     def create_menu(self):
@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
 
         for obj in self.myModel.mbsObjectList:
             main_type = obj.getType()    # z.B. "Body", "Force" ...
-            sub_type  = obj.getSubType() # z.B. "Rigid_EulerParameter_PAI"
+            sub_type  = obj.getSubType() # nicht mehr durch subtype bennen sondern mit Zahl 
             
             # Falls noch keine Kategorie existiert, anlegen:
             if main_type not in category_nodes:
@@ -239,7 +239,7 @@ class MainWindow(QMainWindow):
             display_name = f"{main_type} {type_counts[main_type]}"
 
             # Wenn du zusätzlich den Subtype sehen willst:
-            # display_name += f" ({sub_type})"
+            display_name += f" ({sub_type})"
 
             # Objekt-Knoten einfügen
             object_item = QTreeWidgetItem([display_name])
