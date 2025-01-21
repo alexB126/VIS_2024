@@ -97,6 +97,7 @@ class genericTorque(force):
             parameter = {
                 "body1": {"type": "string", "value": "no"},
                 "body2": {"type": "string", "value": "no"},
+                "name" : {"type": "string", "value": ""},
                 "mode": {"type": "string", "value": ""},
                 "direction": {"type": "vector", "value": [0.,0.,0.]},
                 "TorqueExpression": {"type": "string", "value": ""}
