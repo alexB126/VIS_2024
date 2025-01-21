@@ -309,7 +309,6 @@ class MainWindow(QMainWindow):
         self.vtkWidget.renderer.SetBackground(0,0,0) #hinzufügen der Farben, Normierung zwischen 0,1
         self.vtkWidget.GetRenderWindow().Render()
 
-
     def updateTreeWidget(self):
         self.treeWidget.clear()
         
