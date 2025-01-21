@@ -26,11 +26,13 @@ class genericForce(force):
             parameter = {
                 "body1": {"type": "string", "value": "no"},
                 "body2": {"type": "string", "value": "no"},
+                "name" : {"type": "string", "value": ""},
                 "PointOfApplication_Body1": {"type": "vector", "value": [0.,0.,0.]},
                 "PointOfApplication_Body2": {"type": "vector", "value": [0.,0.,0.]},
                 "mode": {"type": "string", "value": ""},
                 "direction": {"type": "vector", "value": [0.,0.,0.]},
-                "ForceExpression": {"type": "string", "value": ""}
+                "ForceExpression": {"type": "string", "value": ""}, 
+                "color" : {"type": "vector", "value": [0.,0.,0.,0]},
             }
             force.__init__(self,"GenericForce",text=kwargs["text"],parameter=parameter)
         else:

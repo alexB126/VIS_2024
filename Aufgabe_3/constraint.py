@@ -21,6 +21,7 @@ class genericConstraint(constraint):
         if "text" in kwargs:
             parameter = {
                 "body1": {"type": "string", "value": "no"},
+                "name" : {"type": "string", "value": ""},
                 "body2": {"type": "string", "value": "no"},
                 "position": {"type": "vector", "value": [0.,0.,0.]},
                 "x_axis": {"type": "vector", "value": [0.,0.,0.]},

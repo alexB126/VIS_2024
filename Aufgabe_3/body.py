@@ -17,13 +17,16 @@ class rigidBody(body):
         if "text" in kwargs:
             parameter = {
                 "mass": {"type": "float", "value": 1.},
+                "name" : {"type": "string", "value": ""},
                 "COG": {"type": "vector", "value": [0.,0.,0.]},
                 "geometry": {"type": "filepath", "value": ""},
                 "position": {"type": "vector", "value": [0.,0.,0.]},
                 "x_axis": {"type": "vector", "value": [1.,0.,0.]},
                 "y_axis": {"type": "vector", "value": [0.,1.,0.]},
                 "z_axis": {"type": "vector", "value": [0.,0.,1.]},
-                "color": {"type": "colorvector", "value": [0,0,0,0]}
+                "color": {"type": "colorvector", "value": [0,0,0,0]},
+                "transparency": {"type": "int", "value": 0}
+
             }
 
             body.__init__(self,"Rigid_EulerParameter_PAI",text=kwargs["text"],parameter=parameter)
@@ -32,6 +35,11 @@ class rigidBody(body):
 
         else:
             body.__init__(self,"Rigid_EulerParameter_PAI",**kwargs)
+
+        self.updateActor()
+
+    def updateActor(self):
+        self.actors = []
 
         # read OBJ file (CAD graphics)
         reader = vtkOBJReader()
@@ -48,6 +56,7 @@ class rigidBody(body):
         bodyActor.GetProperty().SetSpecular(0.3)
         bodyActor.GetProperty().SetSpecularPower(60.0)
         bodyActor.GetProperty().SetColor(self.parameter["color"]["value"][0:3])
+        bodyActor.GetProperty().SetOpacity((255-self.parameter["transparency"]["value"])/255)
 
         transform_matrix = np.eye(4) 
         transform_matrix[:3, 0] = np.array(self.parameter["x_axis"]["value"])

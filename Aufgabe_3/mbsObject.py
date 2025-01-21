@@ -34,6 +34,7 @@ class mbsObject:
                         elif(self.parameter[key]["type"]=="bool"):
                             self.parameter[key]["value"] = self.str2bool(valueString)
 
+
     def getType(self):
         return self.__type
     

@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtWidgets import (QMainWindow, QWidget, QTreeWidget, QTreeWidgetItem, QHBoxLayout,
                                QFileDialog, QMenuBar, QStatusBar, QMessageBox,QSplitter)
 from PySide6.QtGui import QAction, QKeySequence,QColor
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QStatusBar, QMessageBox, QColorDialog
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QStatusBar, QMessageBox, QColorDialog,QDialog, QPushButton, QVBoxLayout, QGroupBox,QLabel, QSlider, QHBoxLayout, QLineEdit
 from PySide6.QtCore import Qt
 # Importiere das MainWidget für das Rendering
 from main_widget import MainWidget
@@ -44,6 +44,10 @@ class MainWindow(QMainWindow):
         backgroundcolor_action.triggered.connect(self.backgroundaction)
         settings_menu.addAction(backgroundcolor_action)
 
+        # 'Backroundcolor' Aktion hinzufügen
+        bodycolor_action = QAction('BodyColor', self)
+        bodycolor_action.triggered.connect(self.bodycolorfunction)
+        settings_menu.addAction(bodycolor_action)
 
         # 'Load' Aktion hinzufügen
         load_action = QAction('Load', self)
@@ -100,6 +104,78 @@ class MainWindow(QMainWindow):
             # Neu zeichnen
             self.vtkWidget.GetRenderWindow().Render()
             self.myModel.backgroundcolor = r,g,b
+
+    def bodycolorfunction(self):
+        bodywindow = QDialog()
+        bodywindow.setWindowTitle("Eigenschaften fur Korper")
+        mainlayout = QVBoxLayout(bodywindow)
+        #bodywindow.setGeometry(150,150,600,400)
+        self.listofBodies = []
+        for obj in  self.myModel.getlistofMBSObjects(): 
+            if obj.getType() == "Body":
+                self.listofBodies.append(obj)
+        self.Anzeigefarbe = []
+        for body in self.listofBodies: 
+            unterwindow = QGroupBox(f"properties for {body.parameter["name"]["value"]}") 
+            layout = QVBoxLayout(unterwindow)
+            mainlayout.addWidget(unterwindow)
+
+            label_color = QLabel("Farbe")
+            layout.addWidget(label_color)
+
+            self.Anzeigefarbe.append(QLineEdit())
+            self.Anzeigefarbe[self.listofBodies.index(body)].setReadOnly(True)
+            color_show = QColor(body.parameter["color"]["value"][0]*255,body.parameter["color"]["value"][1]*255,body.parameter["color"]["value"][2]*255)
+            self.Anzeigefarbe[self.listofBodies.index(body)].setStyleSheet(f"background-color: {color_show.name()};")      
+            layout.addWidget(self.Anzeigefarbe[self.listofBodies.index(body)])
+            
+            Color_button = QPushButton("Farbe wählen")
+            Color_button.clicked.connect(lambda checked, bodycolor = body, index=self.listofBodies.index(body) :self.bodycolor(bodycolor, index))
+            layout.addWidget(Color_button)
+
+            label_transparency = QLabel("Transparenz")
+            layout.addWidget(label_transparency)
+            layout_slider = QHBoxLayout()
+            label_left = QLabel("0%")
+            layout_slider.addWidget(label_left)
+            transparency_slider = QSlider(Qt.Horizontal)
+            transparency_slider.setMinimum(0)
+            transparency_slider.setMaximum(100)
+            transparency_slider.setValue(body.parameter["transparency"]["value"]/255*100) # von 255 max auf 100 max
+            transparency_slider.valueChanged.connect(lambda value,bodyslider = body: self.transparency_update(value, bodyslider))
+            layout_slider.addWidget(transparency_slider)
+            label_right = QLabel("100%")
+            layout_slider.addWidget(label_right)
+            layout.addLayout(layout_slider)
+
+        OK_Button = QPushButton("bast perfect")
+        OK_Button.clicked.connect(lambda: self.push_ok(bodywindow))
+        mainlayout.addWidget(OK_Button)
+        bodywindow.exec()
+    
+    def transparency_update(self,value,body):
+        body.parameter["transparency"]["value"] = value *255/100
+       
+    def bodycolor(self,body, indexbody):
+        bodycolor = QColorDialog.getColor()
+        if bodycolor.isValid():
+            r = bodycolor.redF()  # r .. 0 - 1
+            g = bodycolor.greenF()
+            b = bodycolor.blueF()
+
+            # Renderer-Körper setzen
+            body.parameter["color"]["value"] = [r,g,b,1.0]
+            self.Anzeigefarbe[indexbody].setStyleSheet(f"background-color: {bodycolor.name()};")
+
+            self.myModel.bodycolor = r,g,b
+            self.vtkWidget.GetRenderWindow().Render()
+
+    def push_ok(self,window):
+        for body in self.listofBodies: 
+            body.hide(self.vtkWidget.renderer)
+            body.updateActor()
+            body.show(self.vtkWidget.renderer)
+        window.accept()
 
  # verbesserung möglich indem man mehr files einlesen kann
     def load_model(self):
