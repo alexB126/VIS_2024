@@ -21,6 +21,7 @@ class measure(mbsObject):
             parameter = {
                 "body1": {"type": "string", "value": "no"},
                 "body2": {"type": "string", "value": "no"},
+                "name" : {"type": "string", "value": ""},
                 "type": {"type": "string", "value": ""},
                 "component": {"type": "int", "value": "0"},
                 "location_body1": {"type": "vector", "value": [0.,0.,0.]},
