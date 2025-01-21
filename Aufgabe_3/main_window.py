@@ -315,28 +315,29 @@ class MainWindow(QMainWindow):
         root_item = QTreeWidgetItem(["Model"])
         self.treeWidget.addTopLevelItem(root_item)
         
-        # Merkt sich Kategorie-Knoten wie "Body" -> QTreeWidgetItem
         category_nodes = {}
-        # Hier führen wir jetzt Zähler pro Typ
-        type_counts = {}
+        type_counts = {}  # nur wenn wir noch eine Fallback-Nummer brauchen
 
         for obj in self.myModel.mbsObjectList:
-            main_type = obj.getType()    # z.B. "Body", "Force" ...
-            sub_type  = obj.getSubType() # nicht mehr durch subtype bennen sondern mit Zahl 
-            
-            # Falls noch keine Kategorie existiert, anlegen:
+            main_type = obj.getType()    # z. B. "Body", "Force", ...
+            sub_type  = obj.getSubType()
+
             if main_type not in category_nodes:
                 category_item = QTreeWidgetItem([main_type + "s"])
                 root_item.addChild(category_item)
                 category_nodes[main_type] = category_item
-                type_counts[main_type] = 0   # Zähler initialisieren
+                type_counts[main_type] = 0
 
-            # Hochzählen
-            type_counts[main_type] += 1
-            display_name = f"{main_type} {type_counts[main_type]}"
+            # Versuche, den Namen aus dem Parameter "name" auszulesen
+            # Viele Objekte (wie Bodies, Constraints) haben so etwas:
+            if "name" in obj.parameter and "value" in obj.parameter["name"]:
+                display_name = obj.parameter["name"]["value"]
+            else:
+                # Fallback, falls kein "name" vorhanden:
+                type_counts[main_type] += 1
+                display_name = f"{main_type} {type_counts[main_type]}"
 
-            # Objekt-Knoten einfügen
             object_item = QTreeWidgetItem([display_name])
-            category_nodes[main_type].addChild(object_item) # fügt die kategorien in den Strukturbaum ein
+            category_nodes[main_type].addChild(object_item)
 
         root_item.setExpanded(True)
