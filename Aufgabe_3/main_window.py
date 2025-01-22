@@ -156,6 +156,7 @@ class MainWindow(QMainWindow):
     
     def transparency_update(self,value,body):
         body.parameter["transparency"]["value"] = value *255/100
+        self.statusBar().showMessage(f"transparenz geändert")
        
     def bodycolor(self,body, indexbody):
         bodycolor = QColorDialog.getColor()
