@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
             # Neu zeichnen
             self.vtkWidget.GetRenderWindow().Render()
             self.myModel.backgroundcolor = r,g,b
+        self.statusBar().showMessage(f"new Background color")
 
     def bodycolorfunction(self):
         bodywindow = QDialog()
@@ -169,6 +170,7 @@ class MainWindow(QMainWindow):
 
             self.myModel.bodycolor = r,g,b
             self.vtkWidget.GetRenderWindow().Render()
+        self.statusBar().showMessage(f"New Body color(s)")
 
     def push_ok(self,window):
         for body in self.listofBodies: 
@@ -255,6 +257,7 @@ class MainWindow(QMainWindow):
         # Ggf. zum Abschluss "ResetCamera" anrufen, 
         # falls du die Szene an den Inhalt anpassen willst:
         self.vtkWidget.renderer.ResetCamera()
+        self.statusBar().showMessage(f"set top view")
 
         self.vtkWidget.GetRenderWindow().Render()
 
@@ -266,7 +269,7 @@ class MainWindow(QMainWindow):
         camera.SetFocalPoint(0, 0, 0)
         # "Oben" = Z-Achse
         camera.SetViewUp(0, 0, 1)
-        
+        self.statusBar().showMessage(f"set front view")
         # Optional:
         self.vtkWidget.renderer.ResetCamera()
         
@@ -276,12 +279,14 @@ class MainWindow(QMainWindow):
         camera = self.vtkWidget.renderer.GetActiveCamera()
         camera.Zoom(1.2)  # 20% reinzoomen
         self.vtkWidget.GetRenderWindow().Render()
+        self.statusBar().showMessage(f"zoomed in ")
 
     def fit_view_to_all(self):
         # Ermittelt den Bounding-Box-Umfang aller sichtbaren Props/Actors im Renderer 
         # und stellt die Kamera so ein, dass sie alles vollständig erfasst:
         self.vtkWidget.renderer.ResetCamera()
         self.vtkWidget.GetRenderWindow().Render()
+        self.statusBar().showMessage(f"fit to 100%")
 
     def initUI(self):
         # Erstelle einen QSplitter (horizontal = nebeneinander)
@@ -316,11 +321,11 @@ class MainWindow(QMainWindow):
         self.treeWidget.addTopLevelItem(root_item)
         
         category_nodes = {}
-        type_counts = {}  # nur wenn wir noch eine Fallback-Nummer brauchen
+        type_counts = {}  # wenn kein name vorhanden ist wird mit Force 1 bis n gezählt 
 
         for obj in self.myModel.mbsObjectList:
-            main_type = obj.getType()    # z. B. "Body", "Force", ...
-            sub_type  = obj.getSubType()
+            main_type = obj.getType()    #  Body, Force, ...
+            sub_type  = obj.getSubType() # vorher gelöst mit diesre variante bis auf name umgestellt wurde
 
             if main_type not in category_nodes:
                 category_item = QTreeWidgetItem([main_type + "s"])
@@ -328,8 +333,7 @@ class MainWindow(QMainWindow):
                 category_nodes[main_type] = category_item
                 type_counts[main_type] = 0
 
-            # Versuche, den Namen aus dem Parameter "name" auszulesen
-            # Viele Objekte (wie Bodies, Constraints) haben so etwas:
+            # Namen aus den Objekten auslesen
             if "name" in obj.parameter and "value" in obj.parameter["name"]:
                 display_name = obj.parameter["name"]["value"]
             else:
@@ -341,3 +345,4 @@ class MainWindow(QMainWindow):
             category_nodes[main_type].addChild(object_item)
 
         root_item.setExpanded(True)
+        self.statusBar().showMessage(f"updated Tree")
